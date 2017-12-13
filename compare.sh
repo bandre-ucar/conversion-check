@@ -4,6 +4,99 @@ function pushd() { builtin pushd "$@" > /dev/null; }
 
 function popd() { builtin popd "$@" > /dev/null; }
 
+# -----------------------------------------------------------------------------
+#
+# ptclm
+#
+# -----------------------------------------------------------------------------
+
+GIT_REMOTE=git@github.com:ESCOMP/ptclm.git
+SVN_ROOT_URL=https://svn-ccsm-models.cgd.ucar.edu/PTCLM
+
+TAGS=(
+    PTCLM1_110504
+    PTCLM1_110726
+    PTCLM1_110902
+    PTCLM1_111114
+    PTCLM1_111129
+    PTCLM1_120125
+    PTCLM1_130111
+    PTCLM1_130130
+    PTCLM1_130216
+    PTCLM1_130529
+    PTCLM1_130724
+    PTCLM1_130910
+    PTCLM1_130920
+    PTCLM1_130923
+    PTCLM1_130929
+    PTCLM2_131119
+    PTCLM2_131122
+    PTCLM2_131122b
+    PTCLM2_131122c
+    PTCLM2_140204
+    PTCLM2_140216
+    PTCLM2_140423
+    PTCLM2_140521
+    PTCLM2_140816
+    PTCLM2_150126
+    PTCLM2_150410
+    PTCLM2_150413
+    PTCLM2_150414
+    PTCLM2_150826
+    PTCLM2_151009
+    PTCLM2_160127
+    PTCLM2_160127a
+    PTCLM2_160818
+    PTCLM2_170302
+    PTCLM2_170706
+    PTCLM2_171016
+    PTCLM2_171016b
+    PTCLM2_171016c
+    PTCLM2_171016d
+    PTCLM2_171024
+    PTCLM2_171024b
+)
+
+GIT_REPO=ptclm-git
+SVN_REPO=ptclm-svn
+
+GIT_OUTPUT=output-git.txt
+SVN_OUTPUT=output-svn.txt
+
+rm -rf ${GIT_REPO} ${SVN_OUTPUT}
+rm -rf ${SVN_REPO} ${GIT_OUTPUT}
+rm results.txt
+
+git clone ${GIT_REMOTE} ${GIT_REPO} >> ${GIT_OUTPUT} 2>&1
+svn checkout --quiet ${SVN_ROOT_URL}/trunk ${SVN_REPO} >> ${SVN_OUTPUT} 2>&1
+
+for tag in ${TAGS[@]}; do
+    pushd ${GIT_REPO}
+    git checkout ${tag} >> ../${GIT_OUTPUT} 2>&1
+    popd
+    pushd ${SVN_REPO}
+    svn switch --quiet ${SVN_ROOT_URL}/trunk_tags/${tag} >> ../${SVN_OUTPUT} 2>&1
+    popd
+    diff --exclude-from=conversion-ignore.txt --recursive ${SVN_REPO} ${GIT_REPO} >> results.txt
+done
+
+# filter some noise from the diff
+grep -v \
+     -e svnurl \
+     -e conversion-ignore.txt \
+     -e '\-\-\-' \
+     -e "[[:digit:]]c[[:digit:]]" \
+     results.txt
+
+
+exit
+
+# -----------------------------------------------------------------------------
+#
+# rtm
+#
+# -----------------------------------------------------------------------------
+
 ROOT_URL=https://svn-ccsm-models.cgd.ucar.edu/rivrtm/trunk_tags
 
 TAGS=(
@@ -87,6 +180,14 @@ for tag in ${TAGS[@]}; do
     popd
     diff --exclude-from=conversion-ignore.txt --recursive rtm-svn rtm-git
 done
+
+exit
+
+# -----------------------------------------------------------------------------
+#
+# mosart
+#
+# -----------------------------------------------------------------------------
 
 ROOT_URL=https://svn-ccsm-models.cgd.ucar.edu/mosart/trunk_tags/
 
