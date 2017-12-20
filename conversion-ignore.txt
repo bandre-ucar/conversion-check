@@ -2,5 +2,21 @@
 .gitignore
 .svn
 LICENSE
-README.rst
+README\.rst
+empty
+usr\.src
+*\.nc
+\.CLMTrunkChecklist
+\.ChangeLog_template
+Copyright
+KnownBugs
+Quickstart\.GUIDE
+Quickstart\.userdatasets
+README\.DGVM
+README
+README_EXTERNALS
+README_cime
+SVN_EXTERNAL_DIRECTORIES\.standalone
+UpDateChangeLog\.pl
+parse_cime\.cs\.status
 
