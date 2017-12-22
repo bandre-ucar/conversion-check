@@ -6,6 +6,220 @@ function popd() { builtin popd "$@" > /dev/null; }
 
 # -----------------------------------------------------------------------------
 #
+# cism
+#
+# -----------------------------------------------------------------------------
+
+GIT_REMOTE=${PWD}/../cism-final
+SVN_ROOT_URL=https://svn-ccsm-models.cgd.ucar.edu/glc
+
+TAGS=(
+    glc_070726
+    glc_071105
+    glc_080817
+    glc_081017
+    glc4_090116
+    glc4_090813
+    glc4_090814
+    glc4_091027
+    glc4_091103
+    glc4_091124
+    glc4_091125
+    glc4_091224
+    glc4_100301
+    glc4_100316
+    glc4_100322
+    glc4_100330
+    glc4_100507
+    cism1_100525
+    cism1_100525b
+    cism1_100603
+    cism1_100608
+    cism1_100616
+    cism1_100616a
+    cism1_100617
+    cism1_100617a
+    cism1_100913
+    cism1_110124
+    cism1_110125
+    cism1_110220
+    cism1_110307
+    cism1_110418
+    cism1_111004
+    cism1_111007
+    cism1_111026
+    cism1_111122
+    cism1_111214
+    cism1_111218
+    cism1_111220
+    cism1_111220a
+    cism1_111221
+    cism1_120123
+    cism1_120322
+    cism1_120512
+    cism1_120521
+    cism1_120529
+    cism1_120629
+    cism1_120823
+    cism1_120829
+    cism1_120905
+    cism1_120921
+    cism1_121001
+    cism1_121002
+    cism1_121008
+    cism1_121009
+    cism1_121010
+    cism1_121012
+    cism1_121106
+    cism1_121106a
+    cism1_121113
+    cism1_121114
+    cism1_130207
+    cism1_130306
+    cism1_130307
+    cism1_130315
+    cism1_130325
+    cism1_130401
+    cism1_130403
+    cism1_130405
+    cism1_130425
+    cism1_130428
+    cism1_130429
+    cism1_130430
+    cism1_130430a
+    cism1_130502
+    cism1_130514
+    cism1_130524
+    cism1_130624
+    cism1_130905
+    cism1_130924
+    cism1_131008
+    cism1_131203
+    cism1_131212
+    cism1_131212a
+    cism1_131213
+    cism1_140203
+    cism1_140303
+    cism1_140305
+    cism1_140403
+    cism1_140416
+    cism1_140501
+    cism1_140602
+    cism1_140914
+    cism1_140916
+    cism1_141006
+    cism2_0_00
+    cism2_0_01
+    cism2_0_02
+    cism2_0_03
+    cism2_0_04
+    cism2_0_05
+    cism2_0_06
+    cism2_0_07
+    cism2_0_08
+    cism2_0_09
+    cism2_1_00
+    cism2_1_01
+    cism2_1_02
+    cism2_1_03
+    cism2_1_04
+    cism2_1_05
+    cism2_1_06
+    cism2_1_07
+    cism2_1_08
+    cism2_1_09
+    cism2_1_10
+    cism2_1_11
+    cism2_1_12
+    cism2_1_13
+    cism2_1_14
+    cism2_1_15
+    cism2_1_16
+    cism2_1_17
+    cism2_1_18
+    cism2_1_19
+    cism2_1_20
+    cism2_1_21
+    cism2_1_22
+    cism2_1_23
+    cism2_1_24
+    cism2_1_25
+    cism2_1_26
+    cism2_1_27
+    cism2_1_28
+    cism2_1_29
+    cism2_1_30
+    cism2_1_31
+    cism2_1_32
+    cism2_1_33
+    cism2_1_34
+    cism2_1_35
+    cism2_1_36
+    cism2_1_37
+    cism2_1_38
+    cism2_1_39
+    cism2_1_40
+    cism2_1_41
+    cism2_1_42
+    cism2_1_43
+    cism2_1_44
+)
+
+GIT_REPO=cism-git
+SVN_REPO=cism-svn
+
+ROOT_DIR=${PWD}
+GIT_OUTPUT=${ROOT_DIR}/output-git.txt
+SVN_OUTPUT=${ROOT_DIR}/output-svn.txt
+
+RESULTS=results.txt
+FILTERED=filtered-results.txt
+FINAL_RESULTS=final-results.txt
+
+rm -rf ${GIT_REPO} ${SVN_OUTPUT}
+rm -rf ${SVN_REPO} ${GIT_OUTPUT}
+rm ${RESULTS} ${FILTERED} ${FINAL_RESULTS}
+
+git clone ${GIT_REMOTE} ${GIT_REPO} >> ${GIT_OUTPUT} 2>&1
+svn checkout --ignore-externals --quiet ${SVN_ROOT_URL}/trunk_tags/${TAGS[0]} ${SVN_REPO} >> ${SVN_OUTPUT} 2>&1
+
+REMAP=
+
+for tag in ${TAGS[@]}; do
+    echo "Working on tag: ${tag}" >> ${RESULTS}
+
+    pushd ${SVN_REPO}
+    svn switch --accept theirs-full --ignore-externals --quiet ${SVN_ROOT_URL}/trunk_tags/${tag}/${REMAP} >> ${SVN_OUTPUT} 2>&1
+    popd
+    
+    pushd ${GIT_REPO}
+    git checkout ${tag} >> ${GIT_OUTPUT} 2>&1
+    popd
+
+    diff --exclude-from=conversion-ignore.txt --recursive ${SVN_REPO} ${GIT_REPO} >> ${RESULTS}
+#    if [ $? -ne 0 -a ${tag} != 'clm3_expa_50' ]; then
+#        exit
+#    fi
+done
+
+# filter some noise from the diff
+grep -v \
+     -e '\$Id' \
+     -e '\$HeadURL' \
+     -e '\$URL' \
+     -e conversion-ignore.txt \
+     -e '\-\-\-' \
+     -e "[[:digit:]]c[[:digit:]]" \
+     ${RESULTS} > ${FILTERED}
+#
+# expected differences
+#
+
+
+exit
+
+# -----------------------------------------------------------------------------
+#
 # clm
 #
 # -----------------------------------------------------------------------------
@@ -586,10 +800,6 @@ grep -v \
 # expected differences
 #
 
-
-# Only in ptclm-svn: mydatafiles - added as empty dir PTCLM1_130920, empty in PTCLM1_130923, first file in PTCLM1_130929
-
-# Only in ptclm-svn/mydatafiles: 1x1pt_US-UMB - added as empty dir in PTCLM2_131122b, first file in PTCLM2_131122c
 
 exit
 
