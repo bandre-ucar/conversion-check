@@ -523,6 +523,7 @@ TAGS=(
     clm4_5_18_r267
     clm4_5_18_r268
     clm4_5_18_r269
+    clm4_5_18_r270
 )
 
 GIT_REPO=clm-git
